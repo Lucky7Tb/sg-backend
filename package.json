@@ -1,0 +1,29 @@
+{
+  "name": "chevaexpress",
+  "version": "1.0.0",
+  "description": "Study grup web divisi backend menggunakan express js",
+  "main": "server.js",
+  "scripts": {
+    "dev": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lucky7Tb/SG-Backend-Web.git"
+  },
+  "keywords": [
+    "api",
+    "express",
+    "javascript",
+    "js",
+    "json"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Lucky7Tb/SG-Backend-Web/issues"
+  },
+  "homepage": "https://github.com/Lucky7Tb/SG-Backend-Web#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
