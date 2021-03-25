@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const PORT = 3000 || process.env.PORT;
+const errorHandler = require('./middleware/error');
 
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
@@ -11,6 +12,8 @@ app.get('/', (req, res) => {
 });
 
 app.use('/books', require('./controller/books'));
+
+app.use(errorHandler);
 
 // Listening port
 app.listen(PORT, () => {

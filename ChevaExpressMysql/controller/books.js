@@ -3,67 +3,93 @@ const router = express.Router();
 
 const { readBooks, readBook, createBook, updateBook, deleteBook } = require('../model/BookModel');
 
-const { responseData, responseMessage } = require('../utils/responseHandler');
+const { bookValidation } = require('../utils/validation');
+
+const asyncHandler = require('../middleware/async');
+
+const { responseData, responseMessage, responseError} = require('../utils/responseHandler');
+const { Router } = require('express');
+const validate = require('validate.js');
 
 // Get all book
-router.get('/', (req, res) => {
-	readBooks(req, res, (result) => {
-		return responseData(res, 200, result);
-	})
-});
+router.get(
+  '/',
+  asyncHandler(async (req, res) => {
+    const dataBook = await readBooks();
+    return responseData(res, 200, dataBook);
+  })
+);
 
 // Get one book
-router.get('/:id', (req, res) => {
-	readBook(req, res, (result) => {
-		if (result.length === 0) {
-			return responseMessage(
-				res,
-				404,
-				`Data buku dengan id ${req.params.id} tidak ditemukan`
-			);
-		}
+router.get('/:id', asyncHandler( async (req, res) => {
+	const id = req.params.id;
+	const oneBook = await readBook(id);
 
-		return responseData(res, 200, result[0]);
-	})
-});
+	if (oneBook.length === 0) {
+    return responseMessage(res, 404, `Data buku dengan id ${id} tidak ditemukan`);
+  }
+
+	return responseData(res, 200, oneBook);
+}))
 
 //Create book
-router.post('/create', (req, res) => {
-	createBook(req, res, (result) => {
-		if(result.affectedRows > 0){
-			return responseMessage(
-				res,
-				201,
-				'Berhasil menambah buku'
-			);
-		}
-	});
-});
+router.post('/create', asyncHandler( async (req, res) => {
+	const data = req.body;
+
+	const validateError = bookValidation(data);
+
+	if (validateError) {
+		return responseError(res, 400, validateError, 'Bad request');
+	}
+
+	const newBook = await createBook(data);
+	if(newBook.affectedRows > 0){
+		return responseMessage(res, 201, `Success created book with id ${newBook.insertId}`);
+	}
+}));
 
 //Update book
-router.put('/update/:id', (req, res) => {
-	updateBook(req, res, (result) => {
-		if(result.changedRows == 0){
-			return responseMessage(res, 400, 'Tidak ada data yang diubah');
-		}
+router.put('/update/:id', asyncHandler( async (req, res) => {
+	const id = req.params.id;
+	const data = req.body;
 
-		return responseMessage(
-			res,
-			200,
-			`Berhasil mengubah data buku dengan id = ${req.params.id}`
-		);
-	});
-});
+	const validateError = bookValidation(data);
+
+	if (validateError) {
+		return responseError(res, 400, validateError, 'Bad request');
+	}
+
+	const oneBook = await readBook(id);
+	const isBookExist = oneBook.length === 1;
+
+	if(!isBookExist){
+		return responseMessage(res, 404, `Book with id ${id} not found`);
+	}
+	
+	const updatedBook = await updateBook(id, data);
+	const isBookUpdated = updatedBook.changedRows > 0;
+	if(isBookUpdated) {
+		return responseMessage(res, 200, `Success update book with id ${id}`);
+	}
+}));
 
 //Delete Book
-router.delete('/delete/:id', (req, res) => {
-	deleteBook(req, res, (result) => {
-		if (result.affectedRows === 0) {
-			return responseMessage(res, 400, 'Tidak ada data yang diubah');
-		}
+router.delete('/delete/:id', asyncHandler(async (req, res) => {
+	const id = req.params.id;
+	
+	const oneBook = await readBook(id);
+	const isBookExist = oneBook.length === 1;
 
-		return responseMessage(res, 200, `Berhasil menghapus data buku dengan id = ${req.params.id}`);
-	});
-});
+	if (!isBookExist) {
+		return responseMessage(res, 404, `Book with id ${id} not found`);
+	}
+
+	const deletedBook = await deleteBook(id);
+	const isDeleted = deletedBook.affectedRows > 0;
+
+	if(isDeleted){
+		return responseMessage(res, 200, `Success deleted book with id ${id}`);
+	}
+}));
 
 module.exports = router;
