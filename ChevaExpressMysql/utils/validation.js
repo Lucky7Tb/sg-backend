@@ -14,10 +14,26 @@ exports.bookValidation = (attribute) => {
     },
     cover: {
       presence: { allowEmpty: false },
+			url: true
     },
   };
 
 	return validate(attribute, constraint, {
 		format: 'flat'
 	});
+};
+
+exports.authorValidation = (attribute) => {
+  let constraint = {
+    username: {
+      presence: { allowEmpty: false },
+    },
+    password: {
+      presence: { allowEmpty: false },
+    },
+  };
+
+  return validate(attribute, constraint, {
+    format: 'flat',
+  });
 };

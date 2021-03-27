@@ -6,10 +6,9 @@ const { readBooks, readBook, createBook, updateBook, deleteBook } = require('../
 const { bookValidation } = require('../utils/validation');
 
 const asyncHandler = require('../middleware/async');
+const tokenHandler = require('../middleware/tokenValidation');
 
 const { responseData, responseMessage, responseError} = require('../utils/responseHandler');
-const { Router } = require('express');
-const validate = require('validate.js');
 
 // Get all book
 router.get(
@@ -33,20 +32,27 @@ router.get('/:id', asyncHandler( async (req, res) => {
 }))
 
 //Create book
-router.post('/create', asyncHandler( async (req, res) => {
-	const data = req.body;
+router.post('/create', tokenHandler, asyncHandler(async (req, res) => {
+    const data = req.body;
 
-	const validateError = bookValidation(data);
+    const validateError = bookValidation(data);
 
-	if (validateError) {
-		return responseError(res, 400, validateError, 'Bad request');
-	}
+    if (validateError) {
+      return responseError(res, 400, validateError, 'Bad request');
+    }
 
-	const newBook = await createBook(data);
-	if(newBook.affectedRows > 0){
-		return responseMessage(res, 201, `Success created book with id ${newBook.insertId}`);
-	}
-}));
+		data.author = req.authData.author;
+
+    const newBook = await createBook(data);
+    if (newBook.affectedRows > 0) {
+      return responseMessage(
+        res,
+        201,
+        `Success created book with id ${newBook.insertId}`
+      );
+    }
+  })
+);
 
 //Update book
 router.put('/update/:id', asyncHandler( async (req, res) => {

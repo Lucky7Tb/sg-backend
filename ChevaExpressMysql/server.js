@@ -13,6 +13,8 @@ app.get('/', (req, res) => {
 
 app.use('/books', require('./controller/books'));
 
+app.use('/author', require('./controller/author'));
+
 app.use(errorHandler);
 
 // Listening port
