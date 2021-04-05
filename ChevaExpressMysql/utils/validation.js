@@ -5,17 +5,14 @@ exports.bookValidation = (attribute) => {
     title: {
       presence: { allowEmpty: false },
     },
-    author: {
-      presence: { allowEmpty: false },
-    },
     isbn: {
       presence: { allowEmpty: false },
       numericality: true,
     },
-    cover: {
-      presence: { allowEmpty: false },
-			url: true
-    },
+    // cover: {
+    //   presence: { allowEmpty: false },
+		// 	url: true
+    // },
   };
 
 	return validate(attribute, constraint, {

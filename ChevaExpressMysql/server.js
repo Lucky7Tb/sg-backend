@@ -3,8 +3,13 @@ const app = express();
 const PORT = 3000 || process.env.PORT;
 const errorHandler = require('./middleware/error');
 
+const fileUpload = require('express-fileupload');
+const path = require('path');
+
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
+app.use(fileUpload());
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Test Server
 app.get('/', (req, res) => {

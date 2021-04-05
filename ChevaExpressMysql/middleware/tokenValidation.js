@@ -7,8 +7,6 @@ const jwt = require('jsonwebtoken');
 const tokenHandler = (req, res, next) => {
 	const headerAuth = req.headers['authorization'];
 
-	console.log(headerAuth);
-
 	if(typeof headerAuth === 'undefined')
 		return responseMessage(res, 403, 'Forbidden No Token');
 

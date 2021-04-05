@@ -1,14 +1,17 @@
 const express = require('express');
 const router = express.Router();
+const fs = require('fs');
 
 const { readBooks, readBook, createBook, updateBook, deleteBook } = require('../model/BookModel');
 
 const { bookValidation } = require('../utils/validation');
+const { uploadValidation } = require('../utils/fileUpload');
 
 const asyncHandler = require('../middleware/async');
 const tokenHandler = require('../middleware/tokenValidation');
 
 const { responseData, responseMessage, responseError} = require('../utils/responseHandler');
+// const { loginAuthor } = require('../model/AuthorModel');
 
 // Get all book
 router.get(
@@ -34,6 +37,7 @@ router.get('/:id', asyncHandler( async (req, res) => {
 //Create book
 router.post('/create', tokenHandler, asyncHandler(async (req, res) => {
     const data = req.body;
+		const file = req.files;
 
     const validateError = bookValidation(data);
 
@@ -41,7 +45,26 @@ router.post('/create', tokenHandler, asyncHandler(async (req, res) => {
       return responseError(res, 400, validateError, 'Bad request');
     }
 
+		if (file === null || !file.cover) {
+			return responseMessage(res, 400, "Cover can't be blank");
+		}
+
+		const fileValidation = uploadValidation(file.cover);
+		if (!fileValidation.success) {
+			return responseMessage(res, 400, fileValidation.result);
+		}
+
+		const filePath = `images/${fileValidation.result}`;
+		const fileName = `${__dirname}/../public/`;
+
+		data.cover = filePath;
 		data.author = req.authData.author;
+
+		file.cover.mv(`${fileName}${filePath}`, err => {
+			if (err) {
+				return responseMessage(res, 400, err);
+			}
+		});
 
     const newBook = await createBook(data);
     if (newBook.affectedRows > 0) {
@@ -58,6 +81,7 @@ router.post('/create', tokenHandler, asyncHandler(async (req, res) => {
 router.put('/update/:id', asyncHandler( async (req, res) => {
 	const id = req.params.id;
 	const data = req.body;
+	const file = req.files;
 
 	const validateError = bookValidation(data);
 
@@ -70,6 +94,31 @@ router.put('/update/:id', asyncHandler( async (req, res) => {
 
 	if(!isBookExist){
 		return responseMessage(res, 404, `Book with id ${id} not found`);
+	}
+
+	if (file !== null) {
+		const fileValidation = uploadValidation(file.cover);
+		if (!fileValidation.success) {
+			return responseMessage(res, 400, fileValidation.result);
+		}
+
+		const filePath = `images/${fileValidation.result}`;
+		const fileName = `${__dirname}/../public/`;
+
+		data.cover = filePath;
+		file.cover.mv(`${fileName}${filePath}`, (err) => {
+			if (err) {
+				return responseMessage(res, 400, err);
+			}
+		});
+
+		if (fs.existsSync(`${fileName}${oneBook[0].cover}`)) {
+			fs.unlink(`${fileName}${oneBook[0].cover}`, err => {
+				if (err) {
+					return responseMessage(res, 500, 'App Crash');
+				}
+			});
+		}
 	}
 	
 	const updatedBook = await updateBook(id, data);
